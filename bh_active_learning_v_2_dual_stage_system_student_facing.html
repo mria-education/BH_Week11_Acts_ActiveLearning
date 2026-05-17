@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>BH Active Learning v2 — Dual Stage System</title>
+<style>
+:root{
+  --bg:#0f172a;--ink:#0f172a;--muted:#475569;--accent:#38bdf8;--accent2:#a78bfa;
+  --line:rgba(255,255,255,.15);--radius:24px;--shadow:0 24px 70px rgba(0,0,0,.35);
+  font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;color:#fff;background:radial-gradient(circle at top left,rgba(56,189,248,.28),transparent 32rem),radial-gradient(circle at bottom right,rgba(167,139,250,.24),transparent 34rem),linear-gradient(135deg,#020617,#0f172a 42%,#111827)}
+.app{display:grid;grid-template-columns:330px 1fr;min-height:100vh}
+aside{position:sticky;top:0;height:100vh;overflow:auto;padding:26px 20px;border-right:1px solid var(--line);background:rgba(2,6,23,.8);backdrop-filter:blur(18px)}
+main{padding:34px}.course{font-size:13px;color:#bae6fd;letter-spacing:.08em;text-transform:uppercase}h1{font-size:28px;line-height:1.05;margin:10px 0 8px}.subtitle{font-size:14px;color:#cbd5e1;line-height:1.45}.lang{display:flex;gap:8px;margin:16px 0}.pill,.nav,button{font:inherit;font-weight:800;border:0;border-radius:999px;cursor:pointer}.pill{padding:10px 14px;background:rgba(255,255,255,.08);color:#e2e8f0;border:1px solid var(--line)}.pill.active{background:var(--accent);color:#082f49}.stage{margin:24px 0 10px;color:#93c5fd;font-size:12px;text-transform:uppercase;letter-spacing:.12em;font-weight:900}.nav{width:100%;display:flex;justify-content:space-between;align-items:center;margin:6px 0;padding:12px 14px;text-align:left;background:transparent;color:#cbd5e1;border:1px solid transparent;border-radius:16px}.nav:hover{background:rgba(255,255,255,.06)}.nav.active{background:rgba(56,189,248,.16);border-color:rgba(56,189,248,.38);color:#fff}.nav b{font-size:11px;color:#94a3b8}.top{display:flex;align-items:center;gap:16px;margin-bottom:24px}.bar{flex:1;background:rgba(255,255,255,.12);height:12px;border-radius:999px;overflow:hidden}.prog{height:100%;width:0;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:.25s}.pct{font-weight:900;color:#e0f2fe;min-width:56px;text-align:right}.hero{border-radius:34px;padding:34px;margin-bottom:22px;box-shadow:var(--shadow);background:linear-gradient(135deg,rgba(56,189,248,.2),rgba(167,139,250,.17)),rgba(15,23,42,.82);border:1px solid var(--line)}.hero h2{font-size:42px;line-height:1.04;margin:0 0 12px}.hero p{color:#dbeafe;font-size:18px;line-height:1.6;max-width:980px}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}.card{background:rgba(248,250,252,.96);color:var(--ink);border-radius:var(--radius);padding:24px;box-shadow:0 18px 42px rgba(0,0,0,.18);border:1px solid rgba(15,23,42,.08);margin-bottom:18px}.card h3{margin:0 0 10px;font-size:22px}.card p,.card li{color:#334155;line-height:1.58;font-size:16px}.mini{font-size:12px;text-transform:uppercase;letter-spacing:.12em;font-weight:900;color:#0369a1;margin-bottom:8px}.box{white-space:pre-wrap;line-height:1.75;background:#f1f5f9;border:1px solid #cbd5e1;border-radius:18px;padding:18px;color:#0f172a;max-height:360px;overflow:auto}label{display:block;font-weight:900;color:#0f172a;margin:14px 0 8px}textarea,input,select{width:100%;border-radius:18px;border:1px solid #cbd5e1;padding:14px;font:inherit;line-height:1.5;background:#fff;color:#0f172a}textarea{min-height:130px;resize:vertical}input,select{min-height:44px}select{margin-bottom:12px}.btn{background:#0f172a;color:#fff;border-radius:14px;margin:10px 8px 0 0;padding:10px 14px}.good{background:#dcfce7;color:#166534}.bad{background:#fee2e2;color:#991b1b}.move{display:flex;justify-content:space-between;margin-top:22px}.primary{background:var(--accent);color:#082f49;padding:10px 14px}.secondary{background:rgba(255,255,255,.1);color:white;border:1px solid var(--line);padding:10px 14px}.roles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.role{background:#f8fafc;border:1px solid #cbd5e1;border-radius:18px;padding:14px}.role strong{color:#0f172a}.role small{color:#475569;display:block;margin-top:5px;line-height:1.35}.toast{position:fixed;right:28px;bottom:28px;background:#0f172a;color:white;border:1px solid var(--line);padding:12px 16px;border-radius:16px;opacity:0;transform:translateY(10px);transition:.2s}.toast.show{opacity:1;transform:translateY(0)}@media(max-width:980px){.app{grid-template-columns:1fr}aside{position:relative;height:auto}main{padding:18px}.grid,.grid3,.roles{grid-template-columns:1fr}.hero h2{font-size:32px}}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside>
+    <div class="course">GEK20070-01 · Week 11</div>
+    <h1>BH Active Learning v2</h1>
+    <div class="subtitle" id="sub"></div>
+    <div class="lang"><button class="pill active" id="enBtn">EN</button><button class="pill" id="koBtn">한국어</button></div>
+    <div id="nav"></div>
+  </aside>
+  <main>
+    <div class="top"><div class="bar"><div class="prog" id="prog"></div></div><div class="pct" id="pct">9%</div></div>
+    <div id="screen"></div>
+    <div class="move"><button class="secondary" id="prevBtn">← Previous</button><button class="primary" id="nextBtn">Next →</button></div>
+  </main>
+</div>
+<div class="toast" id="toast">Copied</div>
+<script>
+'use strict';
+
+const I18N = {
+  sub: ['Dual Stage System · Individual Preparation → Group Discussion & Presentation','이중 단계 시스템 · 개인 준비 → 그룹 토론과 발표'],
+  copied: ['Copied','복사됨'],
+  saved: ['Saved','저장됨'],
+  submitted: ['Status: submitted. Check your Google Sheet to confirm.','상태: 제출되었습니다. Google Sheet에서 확인하십시오.'],
+  needUrl: ['Status: paste your Apps Script Web App URL first.','상태: 먼저 Apps Script Web App URL을 붙여넣으십시오.'],
+  submitting: ['Status: submitting...','상태: 제출 중...'],
+  fail: ['Status: submission failed. Check URL/deployment permissions.','상태: 제출 실패. URL 또는 배포 권한을 확인하십시오.'],
+  notSubmitted: ['Status: not submitted','상태: 아직 제출되지 않음']
+};
+
+const NAV = [
+  {stage:true,en:'Stage 1 — Individual',ko:'1단계 — 개인 작업'},
+  {id:'welcome',en:'Welcome + Rule',ko:'환영 + AI 원칙'},
+  {id:'text',en:'Core Text Station',ko:'본문 스테이션'},
+  {id:'individual',en:'Individual Work',ko:'개인 해석 작업'},
+  {id:'coach',en:'AI Interpretive Coach',ko:'AI 해석 코치'},
+  {id:'revision',en:'Individual Revision',ko:'개인 수정 기록'},
+  {stage:true,en:'Stage 2 — Group',ko:'2단계 — 그룹 작업'},
+  {id:'setup',en:'Group Setup',ko:'그룹 구성'},
+  {id:'compare',en:'Compare + Tension Map',ko:'비교 + 긴장 지도'},
+  {id:'groupai',en:'Group AI Dialogue',ko:'그룹 AI 대화'},
+  {id:'synthesis',en:'Final Group Synthesis',ko:'최종 그룹 종합'},
+  {id:'present',en:'Presentation Card',ko:'발표 카드'},
+  {id:'submit',en:'Submit + Download',ko:'제출 + 다운로드'}
+];
+const PAGE_IDS = NAV.filter(item => item.id).map(item => item.id);
+
+const CORE_TEXTS = {
+  exod20:{title:'Exodus 20:1–17 — The Decalogue',en:'Exodus 20:1–17 — The Decalogue\n\nLaw Type: Covenant law / apodictic commands.\nCovenant Setting: Israel has been redeemed from Egypt before receiving the commandments.\nFocus: obedience as covenant response, not salvation by law.',ko:'출애굽기 20:1–17 — 십계명\n\n법의 종류: 언약법 / 절대 명령.\n언약 상황: 이스라엘은 계명을 받기 전에 이미 애굽에서 구원받았습니다.\n초점: 율법으로 구원받는 것이 아니라, 구원받은 백성의 언약적 응답으로서의 순종.'},
+  lev1:{title:'Leviticus 1:1–9 — The Burnt Offering',en:'Leviticus 1:1–9 — The Burnt Offering\n\nLaw Type: Ritual / sacrificial law.\nCovenant Setting: Israel approaches God through tabernacle worship.\nFocus: whole offering, worship, atonement, access, and surrendered life before God.',ko:'레위기 1:1–9 — 번제\n\n법의 종류: 의식법 / 제사법.\n언약 상황: 이스라엘은 성막 예배를 통해 하나님께 나아갑니다.\n초점: 온전한 드림, 예배, 속죄, 하나님께 나아감, 하나님 앞에서의 헌신된 삶.'},
+  lev19:{title:'Leviticus 19:9–18 — Holiness, Neighbor, and the Vulnerable',en:'Leviticus 19:9–18 — Holiness, Neighbor, and the Vulnerable\n\nLaw Type: Holiness law with ethical/social commands.\nCovenant Setting: Israel embodies God’s holiness in communal life.\nFocus: love of neighbor, justice, truthful speech, protection of the vulnerable.',ko:'레위기 19:9–18 — 거룩, 이웃, 취약한 자\n\n법의 종류: 윤리적/사회적 명령을 포함한 거룩법.\n언약 상황: 이스라엘은 공동체 삶 속에서 하나님의 거룩을 구현합니다.\n초점: 이웃 사랑, 정의, 진실한 말, 취약한 자 보호.'},
+  lev16:{title:'Leviticus 16:1–22 — The Day of Atonement',en:'Leviticus 16:1–22 — The Day of Atonement\n\nLaw Type: Ritual / atonement law.\nCovenant Setting: Israel’s sanctuary and community are cleansed before God.\nFocus: holiness, impurity, forgiveness, priestly mediation, communal restoration.',ko:'레위기 16:1–22 — 속죄일\n\n법의 종류: 의식법 / 속죄법.\n언약 상황: 이스라엘의 성소와 공동체가 하나님 앞에서 정결하게 됩니다.\n초점: 거룩, 부정, 용서, 제사장적 중재, 공동체 회복.'},
+  deut15:{title:'Deuteronomy 15:1–18 — Release, Debt, and Servitude',en:'Deuteronomy 15:1–18 — Release, Debt, and Servitude\n\nLaw Type: Social/economic covenant law.\nCovenant Setting: redeemed Israel practices release and generosity in the land.\nFocus: debt release, anti-poverty ethic, memory of slavery, justice and mercy.',ko:'신명기 15:1–18 — 면제, 빚, 종살이\n\n법의 종류: 사회적/경제적 언약법.\n언약 상황: 구속받은 이스라엘은 땅에서 면제와 관대함을 실천합니다.\n초점: 빚 탕감, 빈곤 방지 윤리, 종살이 기억, 정의와 자비.'},
+  deut6:{title:'Deuteronomy 6:4–9 — The Shema',en:'Deuteronomy 6:4–9 — The Shema\n\nLaw Type: Covenant confession and command.\nCovenant Setting: Israel is formed as a people who love YHWH wholly.\nFocus: love, memory, teaching, embodied identity, household formation.',ko:'신명기 6:4–9 — 쉐마\n\n법의 종류: 언약 고백과 명령.\n언약 상황: 이스라엘은 여호와를 온전히 사랑하는 백성으로 형성됩니다.\n초점: 사랑, 기억, 가르침, embodied identity, 가정 안의 형성.'}
+};
+
+const state = {
+  lang:'en', page:0, core:'exod20',
+  studentName:'', studentId:'', classSection:'GEK20070-01',
+  indExe:'', indHer:'', indInt:'', aiCoach:'',
+  revChanged:'', revSame:'', revTension:'',
+  groupName:'', members:'', agree:'', disagree:'', deep:'', groupAi:'',
+  finalExe:'', finalHer:'', finalInt:'',
+  scriptUrl: localStorage.getItem('bhScriptUrl') || ''
+};
+
+function tr(en, ko){ return state.lang === 'en' ? en : ko; }
+function msg(key){ return I18N[key][state.lang === 'en' ? 0 : 1]; }
+function escapeHtml(value){ return String(value || '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char])); }
+function currentCoreTitle(){ return CORE_TEXTS[state.core].title; }
+
+function inputField(key, enLabel, koLabel, type='textarea'){
+  const label = tr(enLabel, koLabel);
+  const value = escapeHtml(state[key]);
+  if(type === 'input') return `<label for="${key}">${label}</label><input id="${key}" value="${value}" placeholder="${label}">`;
+  return `<label for="${key}">${label}</label><textarea id="${key}" placeholder="${label}">${value}</textarea>`;
+}
+
+function collectData(){
+  return {
+    timestamp:new Date().toISOString(), course:'GEK20070-01', app:'BH Active Learning v2 Dual Stage',
+    studentName:state.studentName, studentId:state.studentId, classSection:state.classSection,
+    groupName:state.groupName, members:state.members, coreText:currentCoreTitle(),
+    individualExegesis:state.indExe, individualHermeneutics:state.indHer, individualIntegration:state.indInt,
+    aiCoachResponse:state.aiCoach, revisionChanged:state.revChanged, revisionSame:state.revSame, revisionTension:state.revTension,
+    groupAgree:state.agree, groupDisagree:state.disagree, deeperNeed:state.deep, groupAiResponse:state.groupAi,
+    finalGroupExegesis:state.finalExe, finalGroupHermeneutics:state.finalHer, finalIntegration:state.finalInt
+  };
+}
+
+function individualPrompt(){
+  return `${tr('You are our biblical hermeneutics coach, not our answer generator.','당신은 우리의 성경해석학 코치이지, 답을 대신 만들어 주는 기계가 아닙니다.')}\n\n${tr('Text:','본문:')} ${currentCoreTitle()}\n\n${tr('Our first answer:','우리의 첫 답변:')}\nEXEGESIS:\n${state.indExe || '[' + tr('not written yet','아직 작성하지 않음') + ']'}\n\nHERMENEUTICS:\n${state.indHer || '[' + tr('not written yet','아직 작성하지 않음') + ']'}\n\nINTEGRATION SENTENCE:\n${state.indInt || '[' + tr('not written yet','아직 작성하지 않음') + ']'}\n\n${tr('Do not give the final answer first. Name strengths, ask 3–5 questions, and help us revise.','최종 답을 먼저 주지 마십시오. 강점을 말한 뒤 3–5개의 질문을 하고 수정을 도와주십시오.')}\n\n${tr('Use Fee & Stuart’s method:','Fee & Stuart의 방법을 사용하십시오:')}\n- ${tr('type of law','법의 종류')}\n- ${tr('covenant setting','언약 상황')}\n- ${tr('continuity and discontinuity','연속성과 불연속성')}\n- ${tr('enduring ethical paradigm','지속되는 윤리적 패러다임')}\n- ${tr('love of God and neighbor','하나님 사랑과 이웃 사랑')}`;
+}
+
+function groupPrompt(){
+  return `${tr('You are our group biblical hermeneutics dialogue coach, not our answer generator.','당신은 우리 그룹의 성경해석학 대화 코치이지, 답을 대신 만들어 주는 기계가 아닙니다.')}\n\n${tr('Text:','본문:')} ${currentCoreTitle()}\n\n${tr('Agreements:','동의한 부분:')}\n${state.agree || '[' + tr('not written yet','아직 작성하지 않음') + ']'}\n\n${tr('Disagreements or tensions:','불일치 또는 긴장:')}\n${state.disagree || '[' + tr('not written yet','아직 작성하지 않음') + ']'}\n\n${tr('Needs deeper interpretation:','더 깊은 해석이 필요한 부분:')}\n${state.deep || '[' + tr('not written yet','아직 작성하지 않음') + ']'}\n\n${tr('Challenge our group interpretation. Identify blind spots, weak assumptions, continuity/discontinuity problems, covenantal tensions, and overlooked literary dynamics. Do not give final answers first. Ask 3–5 questions that will help us produce a stronger final group synthesis.','우리 그룹의 해석에 도전해 주십시오. 맹점, 약한 전제, 연속성/불연속성 문제, 언약적 긴장, 놓친 문학적 움직임을 찾아주십시오. 최종 답을 먼저 주지 말고, 더 강한 최종 그룹 종합을 만들 수 있도록 3–5개의 질문을 해주십시오.')}`;
+}
+
+function exportText(){
+  const data = collectData();
+  return Object.entries(data).map(([key,value]) => `${key}: ${value}`).join('\n\n');
+}
+
+function renderNav(){
+  let pageCount = 1;
+  const html = NAV.map(item => {
+    if(item.stage) return `<div class="stage">${tr(item.en,item.ko)}</div>`;
+    const pageIndex = PAGE_IDS.indexOf(item.id);
+    const active = state.page === pageIndex ? ' active' : '';
+    return `<button class="nav${active}" data-go="${pageIndex}"><span>${tr(item.en,item.ko)}</span><b>${String(pageCount++).padStart(2,'0')}</b></button>`;
+  }).join('');
+  document.getElementById('nav').innerHTML = html;
+  document.getElementById('sub').textContent = msg('sub');
+  document.getElementById('enBtn').classList.toggle('active', state.lang === 'en');
+  document.getElementById('koBtn').classList.toggle('active', state.lang === 'ko');
+  document.querySelectorAll('[data-go]').forEach(button => button.addEventListener('click', () => go(Number(button.dataset.go))));
+}
+
+function renderWelcome(){
+  return `<div class="hero"><h2>${tr('Interpret first. Let AI question. Discern together.','먼저 해석하고, AI에게 질문을 받고, 함께 분별하십시오.')}</h2><p>${tr('This active learning app guides you through two stages: individual interpretive preparation and group discussion/presentation. AI is used as a hermeneutical coach, not as an answer generator.','이 액티브 러닝 앱은 두 단계로 진행됩니다: 개인 해석 준비와 그룹 토론/발표입니다. AI는 답을 만들어 주는 기계가 아니라 성경해석학 코치로 사용됩니다.')}</p></div><div class="grid"><div class="card"><div class="mini">${tr('Stage 1','1단계')}</div><h3>${tr('Individual Work','개인 작업')}</h3><p>${tr('Bring your previous exegetical, hermeneutical, and integration work. Revise it through AI questioning before group discussion.','이전에 작성한 주해, 해석학, 통합 문장을 가져오십시오. 그룹 토론 전 AI 질문을 통해 수정하십시오.')}</p></div><div class="card"><div class="mini">${tr('Stage 2','2단계')}</div><h3>${tr('Group Work','그룹 작업')}</h3><p>${tr('Compare individual answers, map tensions, use AI as discussion catalyst, and produce one final group synthesis for presentation.','개인 답변을 비교하고, 긴장을 지도화하며, AI를 토론 촉진자로 사용하고, 발표를 위한 최종 그룹 종합을 작성하십시오.')}</p></div></div>`;
+}
+
+function renderText(){
+  const options = Object.entries(CORE_TEXTS).map(([key,item]) => `<option value="${key}" ${state.core===key?'selected':''}>${item.title}</option>`).join('');
+  return `<div class="hero"><h2>${tr('Core Text Station','본문 스테이션')}</h2><p>${tr('Select your group’s core text. Use Fee & Stuart, Osborne, and WHERE–WHO–WHAT to guide interpretation.','그룹의 핵심 본문을 선택하십시오. Fee & Stuart, Osborne, WHERE–WHO–WHAT을 사용하여 해석을 진행하십시오.')}</p></div><div class="grid"><div class="card"><label for="coreSelect">${tr('Select core text','핵심 본문 선택')}</label><select id="coreSelect">${options}</select><div class="box">${escapeHtml(CORE_TEXTS[state.core][state.lang])}</div></div><div class="card"><h3>${tr('Interpretive Reminders','해석학적 점검 사항')}</h3><ul><li>${tr('Fee & Stuart: identify law type, covenant setting, continuity/discontinuity, and enduring paradigm.','Fee & Stuart: 법의 종류, 언약 상황, 연속성과 불연속성, 지속되는 윤리적 패러다임을 확인하십시오.')}</li><li>${tr('Osborne: do not dismiss ritual texts; ask how holiness, worship, atonement, and fulfillment work.','Osborne: 의식법 본문을 쉽게 폐기하지 말고, 거룩, 예배, 속죄, 성취가 어떻게 작동하는지 질문하십시오.')}</li><li>${tr('WHERE–WHO–WHAT: identify location, formed identity, tension/action, and embodied movement.','WHERE–WHO–WHAT: 장소, 형성되는 정체성, 긴장/행동, 삶으로 구현되는 움직임을 확인하십시오.')}</li></ul></div></div>`;
+}
+
+function renderIndividual(){
+  return `<div class="hero"><h2>${tr('Stage 1 — Individual Interpretive Work','1단계 — 개인 해석 작업')}</h2><p>${tr('Paste, rewrite, or revise your earlier work. This is your interpretive starting point before group discussion.','이전에 작성한 내용을 붙여넣거나, 다시 쓰거나, 수정하십시오. 이것은 그룹 토론 전 여러분의 해석 출발점입니다.')}</p></div><div class="grid"><div class="card">${inputField('studentName','Student Name','학생 이름','input')}${inputField('studentId','Student ID','학번','input')}${inputField('classSection','Class / Section','수업 / 분반','input')}</div><div class="card">${inputField('indExe','Exegesis: What does this text mean in its original covenantal and literary setting?','주해: 이 본문은 원래의 언약적·문학적 상황 안에서 무엇을 의미합니까?')}</div></div><div class="grid"><div class="card">${inputField('indHer','Hermeneutics: How might this text reshape contemporary identity, ethics, worship, or community?','해석학: 이 본문은 오늘날의 정체성, 윤리, 예배, 공동체를 어떻게 새롭게 형성할 수 있습니까?')}</div><div class="card">${inputField('indInt','Integration Sentence: Write one movement sentence connecting the text and today.','통합 문장: 본문과 오늘을 연결하는 하나의 움직임 문장을 작성하십시오.')}</div></div>`;
+}
+
+function renderCoach(){
+  return `<div class="hero"><h2>${tr('AI Interpretive Coach','AI 해석 코치')}</h2><p>${tr('Copy this prompt into ChatGPT, Claude, Gemini, or another AI assistant. Then paste the AI coach’s questions below.','이 프롬프트를 ChatGPT, Claude, Gemini 또는 다른 AI 도구에 붙여넣으십시오. 그런 다음 AI 코치의 질문을 아래에 붙여넣으십시오.')}</p></div><div class="grid"><div class="card"><h3>${tr('Generated Coaching Prompt','생성된 코칭 프롬프트')}</h3><div class="box" id="individualPrompt"></div><button class="btn" data-copy="individualPrompt">${tr('Copy Prompt','프롬프트 복사')}</button></div><div class="card">${inputField('aiCoach','Paste AI coach’s response here','AI 코치의 응답을 여기에 붙여넣기')}</div></div>`;
+}
+
+function renderRevision(){
+  return `<div class="hero"><h2>${tr('Individual Revision Log','개인 수정 기록')}</h2><p>${tr('Record what changed after AI questioning. Do not erase your first answer; make your interpretive movement visible.','AI 질문 이후 무엇이 바뀌었는지 기록하십시오. 첫 답변을 지우지 말고 해석의 움직임을 보이게 하십시오.')}</p></div><div class="grid3"><div class="card">${inputField('revChanged','What changed?','무엇이 바뀌었습니까?')}</div><div class="card">${inputField('revSame','What stayed the same?','무엇이 유지되었습니까?')}</div><div class="card">${inputField('revTension','What tension remains?','어떤 긴장이 남아 있습니까?')}</div></div>`;
+}
+
+function renderSetup(){
+  const roles = [
+    ['Reader','본문 낭독자','Reads the text carefully.','본문을 주의 깊게 읽습니다.'],
+    ['Exegetical Guardian','주해 지킴이','Protects original context.','원래의 문맥을 지킵니다.'],
+    ['Hermeneutical Connector','해석학 연결자','Bridges contemporary meaning.','오늘의 의미와 연결합니다.'],
+    ['Integrator','통합자','Drafts synthesis sentence.','통합 문장을 작성합니다.'],
+    ['Presenter','발표자','Prepares public articulation.','공적 발표를 준비합니다.'],
+    ['AI Moderator','AI 진행자','Uses AI only as coach/catalyst.','AI를 코치/촉진자로만 사용합니다.']
+  ].map(role => `<div class="role"><strong>${tr(role[0],role[1])}</strong><small>${tr(role[2],role[3])}</small></div>`).join('');
+  return `<div class="hero"><h2>${tr('Stage 2 — Group Setup','2단계 — 그룹 구성')}</h2><p>${tr('Assign roles so group discussion becomes shared discernment, not one person’s answer.','그룹 토론이 한 사람의 답변이 아니라 공동 분별이 되도록 역할을 정하십시오.')}</p></div><div class="card"><div class="grid"><div>${inputField('groupName','Group Name','그룹 이름','input')}</div><div>${inputField('members','Members','구성원','input')}</div></div><h3>${tr('Group Roles','그룹 역할')}</h3><div class="roles">${roles}</div></div>`;
+}
+
+function renderCompare(){
+  return `<div class="hero"><h2>${tr('Compare Answers + Map Tensions','답변 비교 + 긴장 지도')}</h2><p>${tr('Discuss differences among individual answers. Good disagreement can become deeper interpretation.','개인 답변 사이의 차이를 토론하십시오. 좋은 불일치는 더 깊은 해석으로 이어질 수 있습니다.')}</p></div><div class="grid"><div class="card">${inputField('agree','Where did your group agree?','그룹은 어디에서 동의했습니까?')}</div><div class="card">${inputField('disagree','Where did your group disagree or feel tension?','그룹은 어디에서 불일치하거나 긴장을 느꼈습니까?')}</div></div><div class="card">${inputField('deep','What needs deeper interpretation before synthesis?','종합 전에 더 깊은 해석이 필요한 것은 무엇입니까?')}</div>`;
+}
+
+function renderGroupAi(){
+  return `<div class="hero"><h2>${tr('Group AI Dialogue','그룹 AI 대화')}</h2><p>${tr('Use AI to challenge your group interpretation, not to replace your group’s discernment.','AI를 사용하여 그룹의 해석을 대체하지 말고, 그룹 해석에 도전하도록 하십시오.')}</p></div><div class="grid"><div class="card"><h3>${tr('Group AI Prompt','그룹 AI 프롬프트')}</h3><div class="box" id="groupPrompt"></div><button class="btn" data-copy="groupPrompt">${tr('Copy Group Prompt','그룹 프롬프트 복사')}</button></div><div class="card">${inputField('groupAi','Paste AI’s group dialogue questions here','AI의 그룹 토론 질문을 여기에 붙여넣기')}</div></div>`;
+}
+
+function renderSynthesis(){
+  return `<div class="hero"><h2>${tr('Final Group Synthesis','최종 그룹 종합')}</h2><p>${tr('Produce one group answer after individual preparation, AI questioning, and communal discussion.','개인 준비, AI 질문, 공동 토론 이후 하나의 그룹 답변을 작성하십시오.')}</p></div><div class="grid"><div class="card">${inputField('finalExe','Final Group Exegesis','최종 그룹 주해')}</div><div class="card">${inputField('finalHer','Final Group Hermeneutics','최종 그룹 해석학')}</div></div><div class="card">${inputField('finalInt','Final Integration Sentence','최종 통합 문장')}</div>`;
+}
+
+function renderPresent(){
+  return `<div class="hero"><h2>${tr('Presentation Card','발표 카드')}</h2><p>${tr('Prepare a concise public presentation card for gallery walk or group sharing.','갤러리 워크 또는 그룹 발표를 위한 간결한 발표 카드를 준비하십시오.')}</p></div><div class="card"><div class="box" id="presentationPreview"></div><button class="btn" data-copy="presentationPreview">${tr('Copy Presentation Card','발표 카드 복사')}</button></div>`;
+}
+
+function renderSubmit(){
+  return `<div class="hero"><h2>${tr('Submit + Download','제출 + 다운로드')}</h2><p>${tr('Submit student/group work to Google Sheets, copy the export, or download this app as an HTML file.','학생/그룹 작업을 Google Sheets로 제출하고, 결과를 복사하거나, 이 앱을 HTML 파일로 다운로드하십시오.')}</p></div><div class="grid"><div class="card"><h3>${tr('Google Sheets Submission','Google Sheets 제출')}</h3>${inputField('scriptUrl','Apps Script Web App URL','Apps Script 웹 앱 URL','input')}<p id="status"></p><button class="btn good" id="submitSheetsBtn">${tr('Submit to Google Sheets','Google Sheets로 제출')}</button><button class="btn" id="saveUrlBtn">${tr('Save URL in this browser','이 브라우저에 URL 저장')}</button></div><div class="card"><h3>${tr('Download / Export','다운로드 / 내보내기')}</h3><p>${tr('Use this if you want to save a local copy or submit manually.','로컬 사본을 저장하거나 수동으로 제출하려면 사용하십시오.')}</p><button class="btn" data-copy="exportBox">${tr('Copy Full Export','전체 내보내기 복사')}</button><button class="btn bad" id="downloadTxtBtn">${tr('Download Student Work .txt','학생 작업 .txt 다운로드')}</button><button class="btn good" id="downloadHtmlBtn">${tr('Download This App .html','이 앱 .html 다운로드')}</button></div></div><div class="card"><h3>${tr('Full Export Preview','전체 내보내기 미리보기')}</h3><div class="box" id="exportBox"></div></div>`;
+}
+
+const RENDERERS = {welcome:renderWelcome,text:renderText,individual:renderIndividual,coach:renderCoach,revision:renderRevision,setup:renderSetup,compare:renderCompare,groupai:renderGroupAi,synthesis:renderSynthesis,present:renderPresent,submit:renderSubmit};
+
+function updateDynamicBlocks(){
+  const individualBox = document.getElementById('individualPrompt');
+  if(individualBox) individualBox.textContent = individualPrompt();
+  const groupBox = document.getElementById('groupPrompt');
+  if(groupBox) groupBox.textContent = groupPrompt();
+  const exportBox = document.getElementById('exportBox');
+  if(exportBox) exportBox.textContent = exportText();
+  const status = document.getElementById('status');
+  if(status && !status.dataset.touched) status.textContent = msg('notSubmitted');
+  const preview = document.getElementById('presentationPreview');
+  if(preview){
+    preview.innerHTML = `<h2>${tr('Group Presentation Card','그룹 발표 카드')}</h2><p><b>${tr('Group','그룹')}:</b> ${escapeHtml(state.groupName) || '—'}</p><p><b>${tr('Text','본문')}:</b> ${escapeHtml(currentCoreTitle())}</p><hr><p><b>${tr('Key Exegetical Insight','핵심 주해 통찰')}:</b><br>${escapeHtml(state.finalExe) || '—'}</p><p><b>${tr('Key Hermeneutical Insight','핵심 해석학 통찰')}:</b><br>${escapeHtml(state.finalHer) || '—'}</p><p><b>${tr('Integration Sentence','통합 문장')}:</b><br>${escapeHtml(state.finalInt) || '—'}</p><p><b>${tr('Major Tension','주요 긴장')}:</b><br>${escapeHtml(state.disagree) || '—'}</p>`;
+  }
+}
+
+function bindScreenEvents(){
+  document.querySelectorAll('textarea,input').forEach(el => {
+    el.addEventListener('input', event => {
+      state[event.target.id] = event.target.value;
+      updateDynamicBlocks();
+    });
+  });
+  const coreSelect = document.getElementById('coreSelect');
+  if(coreSelect){
+    coreSelect.addEventListener('change', event => {
+      state.core = event.target.value;
+      render();
+    });
+  }
+  document.querySelectorAll('[data-copy]').forEach(button => button.addEventListener('click', () => copyBox(button.dataset.copy)));
+  const saveUrlBtn = document.getElementById('saveUrlBtn');
+  if(saveUrlBtn) saveUrlBtn.addEventListener('click', saveUrl);
+  const submitSheetsBtn = document.getElementById('submitSheetsBtn');
+  if(submitSheetsBtn) submitSheetsBtn.addEventListener('click', submitSheets);
+  const downloadTxtBtn = document.getElementById('downloadTxtBtn');
+  if(downloadTxtBtn) downloadTxtBtn.addEventListener('click', downloadTxt);
+  const downloadHtmlBtn = document.getElementById('downloadHtmlBtn');
+  if(downloadHtmlBtn) downloadHtmlBtn.addEventListener('click', downloadHtml);
+}
+
+function render(){
+  renderNav();
+  const id = PAGE_IDS[state.page];
+  document.getElementById('screen').innerHTML = RENDERERS[id]();
+  bindScreenEvents();
+  const pct = Math.round(((state.page + 1) / PAGE_IDS.length) * 100);
+  document.getElementById('prog').style.width = pct + '%';
+  document.getElementById('pct').textContent = pct + '%';
+  updateDynamicBlocks();
+}
+
+function go(pageNumber){
+  state.page = Math.max(0, Math.min(PAGE_IDS.length - 1, pageNumber));
+  render();
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+function toast(message){
+  const element = document.getElementById('toast');
+  element.textContent = message;
+  element.classList.add('show');
+  setTimeout(() => element.classList.remove('show'), 1500);
+}
+
+async function copyBox(id){
+  const element = document.getElementById(id);
+  if(!element) return;
+  const text = element.innerText || element.textContent || '';
+  try{
+    await navigator.clipboard.writeText(text);
+    toast(msg('copied'));
+  }catch(error){
+    const area = document.createElement('textarea');
+    area.value = text;
+    document.body.appendChild(area);
+    area.select();
+    document.execCommand('copy');
+    area.remove();
+    toast(msg('copied'));
+  }
+}
+
+function saveUrl(){
+  localStorage.setItem('bhScriptUrl', state.scriptUrl);
+  toast(msg('saved'));
+}
+
+async function submitSheets(){
+  const status = document.getElementById('status');
+  if(!state.scriptUrl){
+    status.textContent = msg('needUrl');
+    status.dataset.touched = '1';
+    return;
+  }
+  saveUrl();
+  status.textContent = msg('submitting');
+  status.dataset.touched = '1';
+  try{
+    await fetch(state.scriptUrl, {method:'POST', mode:'no-cors', headers:{'Content-Type':'text/plain;charset=utf-8'}, body:JSON.stringify(collectData())});
+    status.textContent = msg('submitted');
+  }catch(error){
+    status.textContent = msg('fail');
+  }
+}
+
+function downloadFile(filename, content, type){
+  const blob = new Blob([content], {type});
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = filename;
+  link.click();
+  URL.revokeObjectURL(link.href);
+}
+function downloadTxt(){ downloadFile('BH_Active_Learning_v2_Student_Work.txt', exportText(), 'text/plain'); }
+function downloadHtml(){ downloadFile('BH_Active_Learning_v2_Dual_Stage_System.html', '<!DOCTYPE html>\n' + document.documentElement.outerHTML, 'text/html'); }
+
+function setLanguage(nextLang){
+  state.lang = nextLang;
+  render();
+}
+
+document.getElementById('enBtn').addEventListener('click', () => setLanguage('en'));
+document.getElementById('koBtn').addEventListener('click', () => setLanguage('ko'));
+document.getElementById('prevBtn').addEventListener('click', () => go(state.page - 1));
+document.getElementById('nextBtn').addEventListener('click', () => go(state.page + 1));
+
+function runSelfTests(){
+  console.group('BH Active Learning v2 self-tests');
+  console.assert(Array.isArray(PAGE_IDS) && PAGE_IDS.length === 11, 'PAGE_IDS should contain 11 student-facing pages');
+  console.assert(typeof individualPrompt() === 'string' && individualPrompt().includes('biblical hermeneutics coach'), 'English individual prompt should generate');
+  const previousLang = state.lang;
+  state.lang = 'ko';
+  console.assert(individualPrompt().includes('성경해석학 코치'), 'Korean individual prompt should generate');
+  console.assert(groupPrompt().includes('그룹'), 'Korean group prompt should generate');
+  state.lang = previousLang;
+  console.assert(exportText().includes('BH Active Learning v2'), 'Export text should generate');
+  console.groupEnd();
+}
+
+render();
+runSelfTests();
+</script>
+</body>
+</html>
